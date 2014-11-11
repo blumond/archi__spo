@@ -65,7 +65,7 @@ void init_plane(struct nand_plane *p_plane)
 {
 	int i;
 
-	p_plane->page_buffer = (int*)malloc(SIZE_OF_PAGE);
+	p_plane->page_buffer = (char *)malloc(SIZE_OF_PAGE);
 	if (p_plane->page_buffer == NULL)
 	{
 		printf("can't alloc buffer\n");
