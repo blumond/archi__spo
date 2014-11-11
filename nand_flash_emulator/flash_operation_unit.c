@@ -111,7 +111,7 @@ int run_nand_operation(int p_channel, int p_way)
 		dte_req.dst = ftl_req.data;
 		dte_req.id = ftl_req.id * PLANES_PER_CHIP + plane;
 		dte_req.size = ftl_req.length * SIZE_OF_SECTOR;
-		dte_req.src = (char *)chip->planes[plane].blocks[block].pages[page].data + sector_offset * SIZE_OF_SECTOR;
+		dte_req.src = chip->planes[plane].blocks[block].pages[page].data + sector_offset * SIZE_OF_SECTOR;
 
 		pthread_mutex_lock(&dte_req_q->mutex);
 		dte_request_enqueue(dte_req_q, dte_req);
@@ -153,7 +153,7 @@ int run_nand_operation(int p_channel, int p_way)
 		dte_req.dst = ftl_req.data;
 		dte_req.id = ftl_req.id * PLANES_PER_CHIP + plane;
 		dte_req.size = ftl_req.length * SIZE_OF_SECTOR;
-		dte_req.src = (char *)chip->planes[plane].blocks[block].pages[page].data + sector_offset * SIZE_OF_SECTOR;
+		dte_req.src = chip->planes[plane].blocks[block].pages[page].data + sector_offset * SIZE_OF_SECTOR;
 
 		pthread_mutex_lock(&dte_req_q->mutex);
 		dte_request_enqueue(dte_req_q, dte_req);
@@ -452,8 +452,8 @@ void sync_nand_operation()
 					block = addr_to_block(fm.buses[channel].chips[way].planes[i].reg_addr);
 					page = addr_to_page(fm.buses[channel].chips[way].planes[i].reg_addr);
 
-					temp_page_buf = (char *)fm.buses[channel].chips[way].planes[i].blocks[block].pages[page].data;
-					fm.buses[channel].chips[way].planes[i].blocks[block].pages[page].data = (int *)fm.buses[channel].chips[way].planes[i].shadow_buffer;
+					temp_page_buf = fm.buses[channel].chips[way].planes[i].blocks[block].pages[page].data;
+					fm.buses[channel].chips[way].planes[i].blocks[block].pages[page].data = fm.buses[channel].chips[way].planes[i].shadow_buffer;
 					fm.buses[channel].chips[way].planes[i].shadow_buffer = NULL;
 					free(temp_page_buf);
 				}
@@ -464,8 +464,8 @@ void sync_nand_operation()
 				block = addr_to_block(fm.buses[channel].chips[way].planes[plane].reg_addr);
 				page = addr_to_page(fm.buses[channel].chips[way].planes[plane].reg_addr);
 
-				temp_page_buf = (char *)fm.buses[channel].chips[way].planes[plane].blocks[block].pages[page].data;
-				fm.buses[channel].chips[way].planes[plane].blocks[block].pages[page].data = (int *)fm.buses[channel].chips[way].planes[plane].shadow_buffer;
+				temp_page_buf = fm.buses[channel].chips[way].planes[plane].blocks[block].pages[page].data;
+				fm.buses[channel].chips[way].planes[plane].blocks[block].pages[page].data = fm.buses[channel].chips[way].planes[plane].shadow_buffer;
 				fm.buses[channel].chips[way].planes[plane].shadow_buffer = NULL;
 				free(temp_page_buf);
 			}

@@ -63,7 +63,7 @@ struct nand_block
 struct nand_plane
 {
 	struct nand_block *blocks;
-	int *page_buffer;
+	char *page_buffer;
 	char *shadow_buffer;
 	int reg_addr;
 };

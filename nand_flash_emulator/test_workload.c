@@ -78,6 +78,7 @@ void *workload()
 		ftl_req.addr = j | (0 << SHIFT_PLANE);
 		ftl_req.id = id_temp;
 		ftl_req.cmd = READ_MP;
+		ftl_req.data = data1;
 		ftl_req.length = SECTOR_PER_PAGE;
 		time_offset = 0;
 		pthread_mutex_lock(&ftl_to_nand->mutex);
@@ -87,7 +88,7 @@ void *workload()
 		ftl_req.addr = j | (1 << SHIFT_PLANE);
 		ftl_req.id = id_temp;
 		ftl_req.cmd = READ;
-		
+		ftl_req.data = data2;
 		ftl_req.length = SECTOR_PER_PAGE;
 		time_offset = 0;
 		pthread_mutex_lock(&ftl_to_nand->mutex);
@@ -186,6 +187,7 @@ void *workload()
 		ftl_req.addr = j | (0 << SHIFT_PLANE);
 		ftl_req.id = id_temp;
 		ftl_req.cmd = READ_MP;
+		ftl_req.data = data1;
 		time_offset = 0;
 		pthread_mutex_lock(&ftl_to_nand->mutex);
 		if_enqueue(ftl_to_nand, ftl_req, time_offset);
@@ -194,6 +196,7 @@ void *workload()
 		ftl_req.addr = j | (1 << SHIFT_PLANE);
 		ftl_req.id = id_temp;
 		ftl_req.cmd = READ;
+		ftl_req.data = data2;
 		time_offset = 0;
 		pthread_mutex_lock(&ftl_to_nand->mutex);
 		if_enqueue(ftl_to_nand, ftl_req, time_offset);
