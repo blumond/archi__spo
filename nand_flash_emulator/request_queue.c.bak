@@ -9,7 +9,7 @@
 #include "flash_operation_unit.h"
 #include "flash_memory.h"
 
-#define MAX_REQ_Q_CAPACITY 100 //16
+#define MAX_REQ_Q_CAPACITY 16
 
 struct request_queue_type *request_queue_arr;
 
@@ -40,7 +40,7 @@ int enqueue_request_queue(int p_channel, int p_way, struct ftl_request p_ftl_req
 	struct request_queue_node *new_request_node;
 	struct request_queue_node *rq_q_iter;
 	struct request_queue_type *rq_q;
-	rq_q = &(p_rq_q_array[p_channel + NUM_OF_BUS * p_way]);
+	rq_q = &(p_rq_q_array[p_channel + p_channel * p_way]);
 
 #ifdef DEBUG_MODE
 	//queue full check는 enqueue하는 곳에서 수행
@@ -86,13 +86,13 @@ int enqueue_request_queue(int p_channel, int p_way, struct ftl_request p_ftl_req
 				}
 			}
 		}
-		//같은 id가 없는 경우는 tail에 연결
+		//같은 id가 없는 경우는 head에 연결
 		if (rq_q_iter == NULL)
 		{
 			//assert(is_same_addr(wq[channel][way].ftl_req.addr, ftl_req.addr, (ftl_req.cmd == PAGE_PROGRAM_MP)));
-			rq_q->req_q_tail->next = new_request_node;
-			new_request_node->prev = rq_q->req_q_tail;
-			rq_q->req_q_tail = new_request_node;
+			rq_q->req_q_head->prev = new_request_node;
+			new_request_node->next = rq_q->req_q_head;
+			rq_q->req_q_head = new_request_node;
 		}
 	}
 
@@ -105,7 +105,7 @@ struct ftl_request dequeue_request_queue(int p_channel, int p_way, struct reques
 	struct ftl_request ftl_req;
 	struct request_queue_type *rq_q;
 
-	rq_q = &(p_rq_q_array[p_channel + NUM_OF_BUS * p_way]);
+	rq_q = &(p_rq_q_array[p_channel + p_channel * p_way]);
 
 #ifdef DEBUG_MODE
 	//empty check는 dequeue를 호출하는 곳에서 수행

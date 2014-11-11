@@ -245,7 +245,7 @@ void *workload()
 		pthread_mutex_unlock(&nand_to_ftl->mutex);
 		assert(ack_node.ftl_req.id == id_temp);
 		free(data1);
-		free(data2); 
+		free(data2);
 	}
 
 	return 0;
@@ -254,9 +254,14 @@ void *workload()
 void make_data(char *p_data, int p_addr)
 {
 	int i;
+	int *data;
+	
+	data = (int *)p_data;
 
-	for (i = 0; i < SIZE_OF_PAGE; i++)
+	for (i = 0; i < SIZE_OF_PAGE / 4; i++)
 	{
-		p_data[i] = p_addr;
+		data[i] = p_addr;
 	}
+
+	data = NULL;
 }
