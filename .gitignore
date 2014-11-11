@@ -41,3 +41,26 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+
+#project files
+*.log
+*.lastbuildstate
+*.tlog
+*.idb
+*.obj
+*.pdb
+*.a
+*.lib
+*.sample
+*.sum
+*.vcxproj
+*.filters
+*.user
+*.dll
+*.opensdf
+*.gitignore
+*.exe
+*.ilk
+*.sdf
+*.sln
+*.suo
