@@ -10,7 +10,7 @@ void ascending_order_program_violation(int p_last_programmed_page, int p_program
 	if (p_last_programmed_page > p_programming_page)
 	{
 		printf("ascending order program violation\n");
-		assert(0);
+		//assert(0);
 	}
 }
 
@@ -19,7 +19,7 @@ void program_after_erase_violation(int p_state)
 	if (p_state != PFM_ERASED)
 	{
 		printf("program after erase violation\n");
-		assert(0);
+		//assert(0);
 	}
 }
 
@@ -31,7 +31,7 @@ void nop_violation(int p_nop, int p_block_mode)
 		if (p_nop >= NOP_MLC)
 		{
 			printf("number of program violation\n");
-			assert(0);
+			//assert(0);
 		}
 		break;
 
@@ -39,7 +39,7 @@ void nop_violation(int p_nop, int p_block_mode)
 		if (p_nop > NOP_SLC)
 		{
 			printf("number of program violation\n");
-			assert(0);
+			//assert(0);
 		}
 		break;
 	}

@@ -190,7 +190,7 @@ int get_lsb_page(int p_addr)
 
 int addr_to_page(int p_addr)
 {
-	return (p_addr & MASK_PAGE);
+	return ((p_addr >> SHIFT_PAGE) & MASK_PAGE);
 }
 
 int addr_to_plane(int p_addr)

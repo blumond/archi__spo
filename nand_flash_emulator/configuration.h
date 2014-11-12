@@ -10,4 +10,8 @@
 //#define MEMCPY
 #define DATA_TRANSFER_ENGINE
 
+#define NCQ 4
+
+#define FAULT_FREE
+
 #endif

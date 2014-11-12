@@ -4,6 +4,7 @@
 #include "page_fault_model.h"
 #include "simple_rand.h"
 #include "flash_operation_unit.h"
+#include "configuration.h"
 #include <stdio.h>
 
 
@@ -135,12 +136,21 @@ int sync_fault_gen(int cmd, int addr){
 	switch (cmd){
 	case BLOCK_ERASE:
 		pe_cycle = get_pe_cycle(addr);
+
+#ifdef FAULT_FREE
+		return ERASE_OK;
+#endif
 		if (erase_error(pe_cycle) == FAULT){
 			return ERASE_IF;
 		}
 		else return ERASE_OK;
 	case PAGE_PROGRAM_FINISH:
 		pe_cycle = get_pe_cycle(addr);
+
+#ifdef FAULT_FREE
+		return PROGRAM_OK;
+#endif
+
 		if (program_error(pe_cycle) == FAULT){
 			return PROGRAM_IF;
 		}
@@ -153,7 +163,6 @@ int sync_fault_gen(int cmd, int addr){
 	}
 
 	return NO_FAULT;
-
 }
 
 /* 비동기 폴트 생성기 */
@@ -273,10 +282,12 @@ int init_async_fault_generator(void){
 	QueryPerformanceCounter(&fault_time);
 
 	fault_time.QuadPart = fault_time.QuadPart + ASYN_T_INITIAL;
-
+	
+#ifndef FAULT_FREE
 	eq_node.time = fault_time;
 	eq_node.dst = ASYNC_FAULT;
 	reg_asynch_fault(eq_node);
+#endif
 
 	if (init != NULL)
 		fclose(init);
