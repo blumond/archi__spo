@@ -8,6 +8,7 @@
 #include "queue.h"
 #include "flash_memory.h"
 #include "flash_operation_unit.h"
+#include "reorder_buffer.h"
 
 struct queue_type *ds_queue;
 int last_way[MAX_CHANNEL];
@@ -35,6 +36,7 @@ void dynamic_scheduling()
 
 		//enqueue
 		enqueue_request_queue(channel, way, ftl_req, request_queue_arr);
+		alloc_reorder_buffer(ftl_req);
 
 		if (ftl_req.cmd == PAGE_PROGRAM)
 		{

@@ -19,6 +19,7 @@
 #include "workload_generator.h"
 #include "fault_generator.h"
 #include "data_transfer_engine.h"
+#include "reorder_buffer.h"
 
 LARGE_INTEGER freq;
 struct queue_type *fou_queue;
@@ -73,9 +74,7 @@ int run_nand_operation(int p_channel, int p_way)
 		if (ftl_req.cmd == READ_FINISH || ftl_req.cmd == PAGE_PROGRAM_FINISH || ftl_req.cmd == BLOCK_ERASE)
 		{
 			ftl_req.ack = INVALID_CMD_CHAIN;
-			pthread_mutex_lock(&nand_to_ftl->mutex);
-			if_enqueue(nand_to_ftl, ftl_req, 0);
-			pthread_mutex_unlock(&nand_to_ftl->mutex);
+			put_reorder_buffer(ftl_req);
 		}
 		set_bus_idle(p_channel);
 		set_chip_idle(p_channel, p_way);
@@ -184,11 +183,7 @@ int run_nand_operation(int p_channel, int p_way)
 		}
 		pthread_mutex_unlock(&dte_req_q->mutex);
 #endif
-
 		chip->cmd = IDLE;
-		pthread_mutex_lock(&nand_to_ftl->mutex);
-		if_enqueue(nand_to_ftl, ftl_req, 0);
-		pthread_mutex_unlock(&nand_to_ftl->mutex);
 		break;
 
 	case BLOCK_ERASE:
@@ -411,13 +406,15 @@ void sync_nand_operation()
 			set_bus_idle(channel);
 			break;
 
+		case READ_FINISH:
+			put_reorder_buffer(ftl_req);
+			break;
+
 		case BLOCK_ERASE:
 			set_chip_idle(channel, way);
 			fm.buses[channel].chips[way].cmd = IDLE;
 
-			pthread_mutex_lock(&nand_to_ftl->mutex);
-			if_enqueue(nand_to_ftl, ftl_req, 0);
-			pthread_mutex_unlock(&nand_to_ftl->mutex);
+ 			put_reorder_buffer(ftl_req);
 			break;
 
 		case BLOCK_ERASE_MP:
@@ -474,9 +471,7 @@ void sync_nand_operation()
 			fm.buses[channel].chips[way].cmd = IDLE;
 			set_chip_idle(channel, way);
 
-			pthread_mutex_lock(&nand_to_ftl->mutex);
-			if_enqueue(nand_to_ftl, ftl_req, 0);
-			pthread_mutex_unlock(&nand_to_ftl->mutex);
+			put_reorder_buffer(ftl_req);
 			break;
 
 		case RESET:

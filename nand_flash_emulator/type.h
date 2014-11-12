@@ -25,4 +25,6 @@
 #define BIT12 (1 << 12)
 #define BIT13 (1 << 13)
 
+#define UNDEFINE_INT 0xFFFFFFFF
+
 #endif

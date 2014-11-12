@@ -2,7 +2,6 @@
 #define __QUEUE_H__
 
 #include "event_queue.h"
-#include <pthread.h>
 
 struct queue_node
 {
