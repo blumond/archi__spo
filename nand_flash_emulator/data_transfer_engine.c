@@ -142,7 +142,7 @@ void unit_data_transfer(struct dte_request_queue *p_dma_req_q)
 	struct dte_request *dte_req;
 
 	dte_req = p_dma_req_q->head;
-	//memcpy(dte_req->dst, dte_req->src, DATA_TRANSFER_UNIT);
+	memcpy(dte_req->dst, dte_req->src, DATA_TRANSFER_UNIT);
 
 	pthread_mutex_lock(&dte_req_q->mutex);
 	dte_req->src = dte_req->src + DATA_TRANSFER_UNIT;

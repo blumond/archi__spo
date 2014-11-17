@@ -224,7 +224,6 @@ int run_nand_operation(int p_channel, int p_way)
 				chip->planes[plane].blocks[block].pages[i].state = page_state_transition(chip->planes[plane].blocks[block].pages[i].state, op_result);
 			}
 		}
-		//chip->status = sync_fault()
 		break;
 
 	case BLOCK_ERASE_MP:
@@ -413,8 +412,10 @@ void sync_nand_operation()
 		case BLOCK_ERASE:
 			set_chip_idle(channel, way);
 			fm.buses[channel].chips[way].cmd = IDLE;
+			break;
 
- 			put_reorder_buffer(ftl_req);
+		case BLOCK_ERASE_REPORT:
+			put_reorder_buffer(ftl_req);
 			break;
 
 		case BLOCK_ERASE_MP:
@@ -470,7 +471,9 @@ void sync_nand_operation()
 
 			fm.buses[channel].chips[way].cmd = IDLE;
 			set_chip_idle(channel, way);
+			break;
 
+		case PAGE_PROGRAM_REPORT:
 			put_reorder_buffer(ftl_req);
 			break;
 

@@ -11,14 +11,15 @@
 #include "reorder_buffer.h"
 
 struct queue_type *ds_queue;
-int last_way[MAX_CHANNEL];
+static int prev_channel = 0;		//round robin으로 channel scheduling
+static int last_way[MAX_CHANNEL];	//round robin으로 way scheduling
 
 //async notification을 받으면 수행됨
 void dynamic_scheduling()
 {
 	int i, j;
-	struct ftl_request ftl_req;
 	int channel, way;
+	struct ftl_request ftl_req;
 
 	//새로운 request를 request_queue에 입력
 	while (ds_queue->head != NULL)
@@ -28,13 +29,6 @@ void dynamic_scheduling()
 		channel = addr_to_channel(ftl_req.addr);
 		way = addr_to_way(ftl_req.addr);
 
-		//cmd_to_char(ftl_req.cmd, char_cmd);
-		//printf("get ds_queue, ID: %3d, cmd: %s\n", ftl_req.id, char_cmd);
-
-		//check queue full
-		//check_full(channel, way, rq_q_array);
-
-		//enqueue
 		enqueue_request_queue(channel, way, ftl_req, request_queue_arr);
 		alloc_reorder_buffer(ftl_req);
 
@@ -42,54 +36,47 @@ void dynamic_scheduling()
 		{
 			ftl_req.cmd = PAGE_PROGRAM_FINISH;
 			enqueue_request_queue(channel, way, ftl_req, request_queue_arr);
+			ftl_req.cmd = PAGE_PROGRAM_REPORT;
+			enqueue_request_queue(channel, way, ftl_req, request_queue_arr);
+		}
+		else if (ftl_req.cmd == BLOCK_ERASE)
+		{
+			ftl_req.cmd = BLOCK_ERASE_REPORT;
+			enqueue_request_queue(channel, way, ftl_req, request_queue_arr);
 		}
 	}
 
-	//data 전송이 필요없는 cmd부터 먼저 실행
 	for (i = 0; i < NUM_OF_BUS; i++)
 	{
-		if (get_bus_status(i) != BUSY)
+		if (get_bus_status(prev_channel) == BUSY)
 		{
-			for (j = 0; j < CHIPS_PER_BUS; j++)
+			prev_channel++;
+			if (prev_channel >= NUM_OF_BUS) prev_channel = 0;
+			continue;
+		}
+		for (j = 0; j < CHIPS_PER_BUS; j++)
+		{
+			if (request_queue_arr[prev_channel + NUM_OF_BUS * last_way[prev_channel]].num_of_entry
+				&& fm_status->wq[prev_channel][last_way[prev_channel]].status == IDLE)
 			{
-				if (request_queue_arr[i + NUM_OF_BUS * j].num_of_entry
-					&& fm_status->wq[i][j].status == IDLE)
+				if (get_chip_status(prev_channel, last_way[prev_channel]) != BUSY)
 				{
-					if (!(request_queue_arr[i + /*NUM_OF_BUS*/2 * j].req_q_head->ftl_req.cmd & DATA_IN_OUT)
-						&& (get_chip_status(i, j) != BUSY))
+					ftl_req = dequeue_request_queue(prev_channel, last_way[prev_channel], request_queue_arr);
+					send_command_to_nand(prev_channel, last_way[prev_channel], ftl_req);
+
+					//아래 cmd 수행시에는 같은 chip에 바로 다음 cmd까지 실행
+					//data out 이후 program이 연달아 오는 경우 다음 chip은 놀게 되는 문제?
+					if (ftl_req.cmd == PAGE_PROGRAM_REPORT || ftl_req.cmd == BLOCK_ERASE_REPORT
+						|| ftl_req.cmd == READ_FINISH || ftl_req.cmd == PAGE_PROGRAM || ftl_req.cmd == DATA_OUT)
 					{
-						ftl_req = dequeue_request_queue(i, j, request_queue_arr);
-						//cmd_to_char(ftl_req.cmd, char_cmd);
-						//printf("send_command_to_nand, ID: %3d, cmd: %s\n", ftl_req.id, char_cmd);
-						send_command_to_nand(i, j, ftl_req);
+						return;
 					}
 				}
 			}
+			last_way[prev_channel]++;
+			if (last_way[prev_channel] >= CHIPS_PER_BUS) last_way[prev_channel] = 0;
 		}
-	}
-	//data 전송이 필요한 cmd 실행 round robin으로 실행
-	for (i = 0; i < NUM_OF_BUS; i++)
-	{
-		for (j = 0; j < CHIPS_PER_BUS; j++)
-		{
-			if  (get_bus_status(i) == BUSY) break;
-
-			last_way[i]++;
-			if (last_way[i] >= CHIPS_PER_BUS) last_way[i] = 0;
-
-			if (request_queue_arr[i + NUM_OF_BUS * last_way[i]].num_of_entry
-				&& fm_status->wq[i][last_way[i]].status == IDLE)
-			{
-				if (get_chip_status(i, last_way[i]) != BUSY)
-				{
-					ftl_req = dequeue_request_queue(i, last_way[i], request_queue_arr);
-
-					//cmd_to_char(ftl_req.cmd, char_cmd);
-					//printf("send_command_to_nand, ID: %3d, cmd: %s\n", ftl_req.id, char_cmd);
-					//send CMD
-					send_command_to_nand(i, last_way[i], ftl_req);
-				}
-			}				
-		}
+		prev_channel++;
+		if (prev_channel == NUM_OF_BUS) prev_channel = 0;
 	}
 }

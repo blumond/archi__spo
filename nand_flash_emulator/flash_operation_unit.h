@@ -17,12 +17,14 @@
 
 #define BLOCK_ERASE				(CHIP_OP|2)			//0x82
 #define BLOCK_ERASE_MP			(MULTI_PLANE_CMD|2)	//0x22
+#define BLOCK_ERASE_REPORT		7					//0x07
 
 #define READ_STATUS				3					//0x03
 
 #define PAGE_PROGRAM			(DATA_IN_OUT|4)		//0x44
 #define PAGE_PROGRAM_MP			(DATA_IN_OUT|MULTI_PLANE_CMD|4)//0x64
 #define PAGE_PROGRAM_FINISH		(CHIP_OP|4)			//0x84
+#define PAGE_PROGRAM_REPORT		8					//0x08
 
 #define RESET					5					//0x05
 
