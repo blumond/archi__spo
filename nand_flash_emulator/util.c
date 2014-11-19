@@ -23,6 +23,9 @@ void cmd_to_char(int p_cmd, char *p_char_cmd)
 	case BLOCK_ERASE_MP:
 		strcpy_s(p_char_cmd, sizeof("BLOCK_ERASE_MP"), "BLOCK_ERASE_MP");
 		break;
+	case BLOCK_ERASE_REPORT:
+		strcpy_s(p_char_cmd, sizeof("BLOCK_ERASE_REPORT"), "BLOCK_ERASE_REPORT");
+		break;
 	case READ_STATUS:
 		strcpy_s(p_char_cmd, sizeof("READ_STATUS"), "READ_STATUS");
 		break;
@@ -35,9 +38,11 @@ void cmd_to_char(int p_cmd, char *p_char_cmd)
 	case PAGE_PROGRAM_FINISH:
 		strcpy_s(p_char_cmd, sizeof("PAGE_PROGRAM_FINISH"), "PAGE_PROGRAM_FINISH");
 		break;
+	case PAGE_PROGRAM_REPORT:
+		strcpy_s(p_char_cmd, sizeof("PAGE_PROGRAM_FINISH"), "PAGE_PROGRAM_FINISH");
+		break;
 	case RESET:
 		strcpy_s(p_char_cmd, sizeof("RESET"), "RESET");
 		break;
 	}
-
 }
