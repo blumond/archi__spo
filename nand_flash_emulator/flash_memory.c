@@ -4,6 +4,7 @@
 #include <assert.h>
 #include "flash_memory.h"
 #include "flash_operation_unit.h"
+#include "configuration.h"
 
 void init_flashmodule(struct flashmodule *p_fm)
 {
@@ -65,11 +66,23 @@ void init_plane(struct nand_plane *p_plane)
 {
 	int i;
 
+#ifdef MEMCPY
 	p_plane->page_buffer = (char *)malloc(SIZE_OF_PAGE);
 	if (p_plane->page_buffer == NULL)
 	{
-		printf("can't alloc buffer\n");
+		printf("can't alloc page buffer\n");
 		assert(p_plane->page_buffer != NULL);
+	}
+#endif
+#ifdef DATA_TRANSFER_ENGINE
+	p_plane->page_buffer = NULL;
+#endif
+
+	p_plane->shadow_buffer = (char *)malloc(SIZE_OF_PAGE);
+	if (p_plane->shadow_buffer == NULL)
+	{
+		printf("can't alloc shadow buffer\n");
+		assert(p_plane->shadow_buffer != NULL);
 	}
 	p_plane->reg_addr = 0;
 
@@ -265,6 +278,8 @@ void reset_chip(struct nand_chip *p_chip)
 
 void reset_plane(struct nand_plane *p_plane)
 {
+#ifdef MEMCPY
 	memset(p_plane->page_buffer, 0xff, SIZE_OF_PAGE);
+#endif
 	p_plane->reg_addr = 0;
 }

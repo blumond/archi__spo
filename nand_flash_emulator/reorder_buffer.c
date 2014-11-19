@@ -11,7 +11,6 @@ struct queue_type *reorder_buffer;
 void alloc_reorder_buffer(struct ftl_request p_ftl_req)
 {
 	struct queue_node *q_node_iter;
-	struct ftl_request ftl_req;
 
 	for (q_node_iter = reorder_buffer->head; q_node_iter != NULL; q_node_iter = q_node_iter->next)
 	{
