@@ -44,6 +44,23 @@
 #define SHIFT_LUN	(ADDR_SECTOR_OFFSET+ADDR_PAGE+ADDR_PLANE+ADDR_BLOCK)
 #define SHIFT_ADDR	(ADDR_SECTOR_OFFSET+ADDR_PAGE+ADDR_PLANE+ADDR_BLOCK+ADDR_LUN)
 
+struct nand_memory_pointer
+{
+	char *shadow_buffer;
+	char *page_cell;
+	struct nand_page *page;
+	struct nand_block *block;
+	struct nand_plane *plane;
+	struct nand_chip *chip;
+	struct bus *bus;
+
+	int pages;
+	int blocks;
+	int planes;
+	int chips;
+	int buses;
+};
+
 struct nand_page
 {
 	int state;	//abstract page fault model state

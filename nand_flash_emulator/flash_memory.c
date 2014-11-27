@@ -6,17 +6,62 @@
 #include "flash_operation_unit.h"
 #include "configuration.h"
 
+static struct nand_memory_pointer nand_mem_pointer;
+
+void init_memory_alloc(struct nand_memory_pointer *p_nand_mem_pointer)
+{
+	p_nand_mem_pointer->pages = 0;
+	p_nand_mem_pointer->blocks = 0;
+	p_nand_mem_pointer->planes = 0;
+	p_nand_mem_pointer->chips = 0;
+	p_nand_mem_pointer->buses = 0;
+
+	p_nand_mem_pointer->bus = (struct bus*)malloc(sizeof(struct bus) * NUM_OF_BUS);
+	if (p_nand_mem_pointer->bus == NULL)
+	{
+		printf("can't alloc buses\n");
+		assert(p_nand_mem_pointer->bus != NULL);
+	}
+	p_nand_mem_pointer->chip = (struct nand_chip *)malloc(sizeof(struct nand_chip) * CHIPS_PER_BUS * NUM_OF_BUS);
+	if (p_nand_mem_pointer->chip == NULL)
+	{
+		printf("can't alloc chips\n");
+		assert(p_nand_mem_pointer->chip != NULL);
+	}
+	p_nand_mem_pointer->plane = (struct nand_plane*)malloc(sizeof(struct nand_plane) * PLANES_PER_CHIP * CHIPS_PER_BUS * NUM_OF_BUS);
+	if (p_nand_mem_pointer->plane == NULL)
+	{
+		printf("can't alloc planes\n");
+		assert(p_nand_mem_pointer->plane != NULL);
+	}
+	p_nand_mem_pointer->shadow_buffer = (char *)malloc(SIZE_OF_PAGE * PLANES_PER_CHIP * CHIPS_PER_BUS * NUM_OF_BUS);
+	if (p_nand_mem_pointer->shadow_buffer == NULL)
+	{
+		printf("can't alloc shadow_buffer\n");
+		assert(p_nand_mem_pointer->shadow_buffer != NULL);
+	}
+	p_nand_mem_pointer->block = (struct nand_block*)malloc(sizeof(struct nand_block) * BLOCKS_PER_PLANE * PLANES_PER_CHIP * CHIPS_PER_BUS * NUM_OF_BUS);
+	if (p_nand_mem_pointer->block == NULL)
+	{
+		printf("can't alloc blocks\n");
+		assert(p_nand_mem_pointer->block != NULL);
+	}
+	p_nand_mem_pointer->page = (struct nand_page *)malloc(sizeof(struct nand_page) * PAGES_PER_BLOCK * BLOCKS_PER_PLANE * PLANES_PER_CHIP * CHIPS_PER_BUS * NUM_OF_BUS);
+	if (p_nand_mem_pointer->page == NULL)
+	{
+		printf("can't alloc pages\n");
+		assert(p_nand_mem_pointer->page != NULL);
+	}
+}
+
 void init_flashmodule(struct flashmodule *p_fm)
 {
 	int i;
 
+	init_memory_alloc(&nand_mem_pointer);
+
 	p_fm->power_fail_flag = 0;
-	p_fm->buses = (struct bus*)malloc(sizeof(struct bus) * NUM_OF_BUS);
-	if (p_fm->buses == NULL)
-	{
-		printf("can't alloc buses\n");
-		assert(p_fm->buses != NULL);
-	}
+	p_fm->buses = nand_mem_pointer.bus;
 
 	for (i = 0; i < NUM_OF_BUS; i++)
 	{
@@ -28,12 +73,8 @@ void init_bus(struct bus *p_bus)
 {
 	int i;
 
-	p_bus->chips = (struct nand_chip *)malloc(sizeof(struct nand_chip) * CHIPS_PER_BUS);
-	if (p_bus->chips == NULL)
-	{
-		printf("can't alloc chips\n");
-		assert(p_bus->chips != NULL);
-	}
+	p_bus->chips = &nand_mem_pointer.chip[nand_mem_pointer.buses * CHIPS_PER_BUS];
+	nand_mem_pointer.buses++;
 
 	for (i = 0; i < CHIPS_PER_BUS; i++)
 	{
@@ -49,12 +90,8 @@ void init_chip(struct nand_chip *p_chip)
 	p_chip->current_access_mode = MLC_MODE;
 	p_chip->cmd = IDLE;
 
-	p_chip->planes = (struct nand_plane*)malloc(sizeof(struct nand_plane) * PLANES_PER_CHIP);
-	if (p_chip->planes == NULL)
-	{
-		printf("can't alloc planes\n");
-		assert(p_chip->planes != NULL);
-	}
+	p_chip->planes = &nand_mem_pointer.plane[nand_mem_pointer.chips];
+	nand_mem_pointer.chips++;
 
 	for (i = 0; i < PLANES_PER_CHIP; i++)
 	{
@@ -76,22 +113,12 @@ void init_plane(struct nand_plane *p_plane)
 #endif
 #ifdef DATA_TRANSFER_ENGINE
 	p_plane->page_buffer = NULL;
+	p_plane->shadow_buffer = &nand_mem_pointer.shadow_buffer[nand_mem_pointer.planes * SIZE_OF_PAGE];
 #endif
-
-	p_plane->shadow_buffer = (char *)malloc(SIZE_OF_PAGE);
-	if (p_plane->shadow_buffer == NULL)
-	{
-		printf("can't alloc shadow buffer\n");
-		assert(p_plane->shadow_buffer != NULL);
-	}
 	p_plane->reg_addr = 0;
 
-	p_plane->blocks = (struct nand_block*)malloc(sizeof(struct nand_block) * BLOCKS_PER_PLANE);
-	if (p_plane->blocks == NULL)
-	{
-		printf("can't alloc blocks\n");
-		assert(p_plane->blocks != NULL);
-	}
+	p_plane->blocks = &nand_mem_pointer.block[nand_mem_pointer.planes * BLOCKS_PER_PLANE];
+	nand_mem_pointer.planes++;
 
 	for (i = 0; i < BLOCKS_PER_PLANE; i++)
 	{
@@ -107,12 +134,10 @@ void init_block(struct nand_block *p_block)
 	p_block->last_programmed_page = 0;
 	p_block->pecycle = 0;
 	p_block->block_access_mode = MLC_MODE;
-	p_block->pages = (struct nand_page *)malloc(sizeof(struct nand_page) * PAGES_PER_BLOCK);
-	if (p_block->pages == NULL)
-	{
-		printf("can't alloc pages\n");
-		assert(p_block->pages != NULL);
-	}
+	p_block->pages = &nand_mem_pointer.page[nand_mem_pointer.blocks * PAGES_PER_BLOCK];
+	nand_mem_pointer.page_cell = (char *)malloc(SIZE_OF_PAGE * PAGES_PER_BLOCK);
+	nand_mem_pointer.pages = 0;
+	nand_mem_pointer.blocks++;
 
 	for (i = 0; i < PAGES_PER_BLOCK; i++)
 	{
@@ -124,12 +149,8 @@ void init_page(struct nand_page *p_page)
 {
 	p_page->nop = 0;
 	p_page->state = 0;
-	p_page->data = (char *)malloc(SIZE_OF_PAGE);
-	if (p_page->data == NULL)
-	{
-		printf("can't alloc page\n");
-		assert(p_page->data != NULL);
-	}
+	p_page->data = &nand_mem_pointer.page_cell[nand_mem_pointer.pages * SIZE_OF_PAGE];
+	nand_mem_pointer.pages++;
 }
 
 void init_sibling_page_table()
