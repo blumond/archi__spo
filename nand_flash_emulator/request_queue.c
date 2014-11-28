@@ -12,6 +12,7 @@
 #define MAX_REQ_Q_CAPACITY 100 //16
 
 struct request_queue_type *request_queue_arr;
+struct request_alloc_info_t request_alloc_info;
 
 //알고리즘에따라 다르게 동작할 수 있도록 interface는 통일하고 implementation은 별도로 한다.
 //queue 관련 function call 이전에 수행 가능한지 먼저 검사 한다. (full, empty...)
@@ -19,6 +20,7 @@ struct request_queue_type *request_queue_arr;
 void init_request_queue(struct request_queue_type **p_request_queue_arr)
 {
 	int i;
+	struct request_queue_node *reserved_rq_q_node;
 	
 	*p_request_queue_arr = (struct request_queue_type *)malloc(sizeof(struct request_queue_type) * NUM_OF_BUS * CHIPS_PER_BUS);
 	if (*p_request_queue_arr == NULL)
@@ -27,12 +29,63 @@ void init_request_queue(struct request_queue_type **p_request_queue_arr)
 		assert(*p_request_queue_arr != NULL);
 	}
 
+	reserved_rq_q_node = (struct request_queue_node *)malloc(sizeof(struct request_queue_node) * RESERVED_QUEUE_SIZE);
+
+	request_alloc_info.remainder = RESERVED_QUEUE_SIZE;
+	request_alloc_info.head = request_alloc_info.request_alloc_table;
+	request_alloc_info.tail = &request_alloc_info.request_alloc_table[RESERVED_QUEUE_SIZE - 1];
+
+	for (i = 0; i < RESERVED_QUEUE_SIZE - 1; i++)
+	{
+		request_alloc_info.request_alloc_table[i].container = &reserved_rq_q_node[i];
+		request_alloc_info.request_alloc_table[i].next = &request_alloc_info.request_alloc_table[i + 1];
+	}
+	request_alloc_info.request_alloc_table[i].container = &reserved_rq_q_node[i];
+	request_alloc_info.request_alloc_table[i].next = NULL;
+
 	for (i = 0; i < NUM_OF_BUS * CHIPS_PER_BUS; i++)
 	{
 		(*p_request_queue_arr)[i].num_of_entry = 0;
 		(*p_request_queue_arr)[i].req_q_head = NULL;
 		(*p_request_queue_arr)[i].req_q_tail = NULL;
 	}
+}
+
+struct request_queue_node* alloc_req_queue()
+{
+	struct request_queue_node *rq_q_node;
+	struct request_alloc_queue_t *temp_rq_alloc_q;
+
+	assert(request_alloc_info.remainder > 0);
+	temp_rq_alloc_q = request_alloc_info.head;
+
+	rq_q_node = temp_rq_alloc_q->container;
+
+	request_alloc_info.head = request_alloc_info.head->next;
+	temp_rq_alloc_q->container = NULL;
+
+	if (request_alloc_info.tail->next != NULL)
+	{
+		temp_rq_alloc_q->next = request_alloc_info.tail->next;
+		request_alloc_info.tail->next = temp_rq_alloc_q;
+	}
+	else
+	{
+		temp_rq_alloc_q->next = NULL;
+		request_alloc_info.tail->next = temp_rq_alloc_q;
+	}
+
+	request_alloc_info.remainder--;
+
+	return rq_q_node;
+}
+void free_req_queue(struct request_queue_node *p_free_node)
+{
+	assert(request_alloc_info.remainder < RESERVED_QUEUE_SIZE);
+	assert(request_alloc_info.tail->next != NULL);
+	request_alloc_info.remainder++;
+	request_alloc_info.tail = request_alloc_info.tail->next;
+	request_alloc_info.tail->container = p_free_node;
 }
 
 int enqueue_request_queue(int p_channel, int p_way, struct ftl_request p_ftl_req, struct request_queue_type *p_rq_q_array)
@@ -49,7 +102,7 @@ int enqueue_request_queue(int p_channel, int p_way, struct ftl_request p_ftl_req
 	
 	rq_q->num_of_entry++;
 
-	new_request_node = (struct request_queue_node *)malloc(sizeof(struct request_queue_node));
+	new_request_node = alloc_req_queue();
 	new_request_node->ftl_req = p_ftl_req;
 	new_request_node->next = NULL;
 	new_request_node->prev = NULL;
@@ -126,7 +179,7 @@ struct ftl_request dequeue_request_queue(int p_channel, int p_way, struct reques
 	}
 	
 	ftl_req = rq_head->ftl_req;
-	free(rq_head);
+	free_req_queue(rq_head);
 
 	return ftl_req;
 }
