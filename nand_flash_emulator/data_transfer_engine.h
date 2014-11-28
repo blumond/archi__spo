@@ -2,6 +2,7 @@
 #define __DATA_TRANSFER_ENGINE__
 
 #include <pthread.h>
+#include "configuration.h"
 
 #define DATA_TRANSFER_UNIT 512
 
@@ -28,7 +29,23 @@ struct dte_request_queue
 	pthread_mutex_t mutex;
 };
 
+struct dte_alloc_queue_t
+{
+	struct dte_request *container;
+	struct dte_alloc_queue_t *next;
+};
+
+struct dte_alloc_info_t
+{
+	int remainder;
+	struct dte_alloc_queue_t *head;
+	struct dte_alloc_queue_t *tail;
+	struct dte_alloc_queue_t dte_alloc_table[RESERVED_QUEUE_SIZE];
+};
+
 void init_dte_request_queue(struct dte_request_queue **p_dte_req_q);
+struct dte_request* alloc_dte_req();
+void free_dte_req(struct dte_request *p_free_node);
 
 void dte_request_enqueue(struct dte_request_queue *p_dte_req_q, struct dte_request p_dte_req);
 void set_dte_request_deadline(struct dte_request_queue *p_dte_req_q, int p_id, long long p_deadline);

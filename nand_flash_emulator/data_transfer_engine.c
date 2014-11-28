@@ -5,15 +5,33 @@
 #include "data_transfer_engine.h"
 
 struct dte_request_queue *dte_req_q;
+struct dte_alloc_info_t dte_alloc_info;
 
 void init_dte_request_queue(struct dte_request_queue **p_dte_req_q)
 {
+	int i;
+	struct dte_request *reserved_dte_request;
+
 	*p_dte_req_q = (struct dte_request_queue *)malloc(sizeof(struct dte_request_queue));
 	if (*p_dte_req_q == NULL)
 	{
 		printf("can't alloc dte_request_queue\n");
 		assert(*p_dte_req_q != NULL);
 	}
+
+	reserved_dte_request = (struct dte_request *)malloc(sizeof(struct dte_request) * RESERVED_QUEUE_SIZE);
+
+	dte_alloc_info.remainder = RESERVED_QUEUE_SIZE;
+	dte_alloc_info.head = dte_alloc_info.dte_alloc_table;
+	dte_alloc_info.tail = &dte_alloc_info.dte_alloc_table[RESERVED_QUEUE_SIZE - 1];
+
+	for (i = 0; i < RESERVED_QUEUE_SIZE - 1; i++)
+	{
+		dte_alloc_info.dte_alloc_table[i].container = &reserved_dte_request[i];
+		dte_alloc_info.dte_alloc_table[i].next = &dte_alloc_info.dte_alloc_table[i + 1];
+	}
+	dte_alloc_info.dte_alloc_table[i].container = &reserved_dte_request[i];
+	dte_alloc_info.dte_alloc_table[i].next = NULL;
 
 	(*p_dte_req_q)->head = NULL;
 	(*p_dte_req_q)->tail = NULL;
@@ -22,12 +40,50 @@ void init_dte_request_queue(struct dte_request_queue **p_dte_req_q)
 	pthread_mutex_init(&(*p_dte_req_q)->mutex, NULL);
 }
 
+struct dte_request* alloc_dte_req()
+{
+	struct dte_request *dte_req;
+	struct dte_alloc_queue_t *temp_dte_alloc_queue;
+	
+	assert(dte_alloc_info.remainder > 0);
+	temp_dte_alloc_queue = dte_alloc_info.head;
+	
+	dte_req = temp_dte_alloc_queue->container;
+
+	dte_alloc_info.head = dte_alloc_info.head->next;
+	temp_dte_alloc_queue->container = NULL;
+
+	if (dte_alloc_info.tail->next != NULL)
+	{
+		temp_dte_alloc_queue->next = dte_alloc_info.tail->next;
+		dte_alloc_info.tail->next = temp_dte_alloc_queue;
+	}
+	else
+	{
+		temp_dte_alloc_queue->next = NULL;
+		dte_alloc_info.tail->next = temp_dte_alloc_queue;
+	}
+
+	dte_alloc_info.remainder--;
+		
+	return dte_req;
+}
+
+void free_dte_req(struct dte_request* p_free_node)
+{
+	assert(dte_alloc_info.remainder < RESERVED_QUEUE_SIZE);
+	assert(dte_alloc_info.tail->next != NULL);
+	dte_alloc_info.remainder++;
+	dte_alloc_info.tail = dte_alloc_info.tail->next;
+	dte_alloc_info.tail->container = p_free_node;
+}
+
 void dte_request_enqueue(struct dte_request_queue *p_dte_req_q, struct dte_request p_dte_req)
 {
 	struct dte_request *dte_req;
 	struct dte_request *dte_req_iter;
 
-	dte_req = (struct dte_request *)malloc(sizeof(struct dte_request));
+	dte_req = alloc_dte_req();
 	*dte_req = p_dte_req;
 	dte_req->next = NULL;
 	dte_req->prev = NULL;
@@ -116,7 +172,7 @@ void set_dte_request_deadline(struct dte_request_queue *p_dte_req_q, int p_id, l
 			dte_req_iter;
 
 			dte_request_enqueue(p_dte_req_q, *dte_req_iter);
-			free(dte_req_iter);
+			free_dte_req(dte_req_iter);
 		}
 	}
 }
@@ -133,7 +189,7 @@ struct dte_request get_dte_request(struct dte_request_queue *p_dma_req_q)
 	if (temp_dte_req == p_dma_req_q->tail) p_dma_req_q->tail = NULL;
 	p_dma_req_q->num_of_entries--;
 
-	free(temp_dte_req);
+	free_dte_req(temp_dte_req);
 	return dte_req;
 }
 

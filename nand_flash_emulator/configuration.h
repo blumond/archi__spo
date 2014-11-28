@@ -12,6 +12,8 @@
 
 #define NCQ 4
 
+#define RESERVED_QUEUE_SIZE 64
+
 #define FAULT_FREE
 
 #endif

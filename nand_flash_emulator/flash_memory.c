@@ -104,12 +104,8 @@ void init_plane(struct nand_plane *p_plane)
 	int i;
 
 #ifdef MEMCPY
-	p_plane->page_buffer = (char *)malloc(SIZE_OF_PAGE);
-	if (p_plane->page_buffer == NULL)
-	{
-		printf("can't alloc page buffer\n");
-		assert(p_plane->page_buffer != NULL);
-	}
+	p_plane->page_buffer = &nand_mem_pointer.shadow_buffer[nand_mem_pointer.planes * SIZE_OF_PAGE];
+	p_plane->shadow_buffer = NULL;
 #endif
 #ifdef DATA_TRANSFER_ENGINE
 	p_plane->page_buffer = NULL;
