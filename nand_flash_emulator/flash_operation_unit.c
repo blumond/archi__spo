@@ -20,9 +20,12 @@
 #include "fault_generator.h"
 #include "data_transfer_engine.h"
 #include "reorder_buffer.h"
+#include "nte_test.h"
+#include "test_workload.h"
 
 LARGE_INTEGER freq;
 struct queue_type *fou_queue;
+int test = 0;
 
 
 //독립적인 쓰레드로 구현되어 있어야 함
@@ -552,6 +555,8 @@ void async_fault_processing()
 	int i, j, k, l, plane, block, page;
 
 	fm.power_fail_flag = 1;
+	Sleep(1000);
+
 	memset(damaged_block, 0xFF, sizeof(damaged_block));
 
 	//on-going operation들 fault 처리
@@ -623,7 +628,16 @@ void async_fault_processing()
 	//clear externel request queue
 	while (ftl_to_nand->num_of_entries)
 	{
+		pthread_mutex_lock(&ftl_to_nand->mutex);
 		if_dequeue(ftl_to_nand);
+		pthread_mutex_unlock(&ftl_to_nand->mutex);
+	}
+
+	while (nand_to_ftl->num_of_entries)
+	{
+		pthread_mutex_lock(&nand_to_ftl->mutex);
+		if_dequeue(nand_to_ftl);
+		pthread_mutex_unlock(&nand_to_ftl->mutex);
 	}
 
 	//clear request queue
@@ -650,9 +664,23 @@ void async_fault_processing()
 		dequeue(fou_queue);
 	}
 
+	//clear reorder buffer queue
+	while (reorder_buffer->num_of_entries)
+	{
+		dequeue(reorder_buffer);
+	}
+
 	//init chip and bus status
 	reset_flash_module_status(fm_status);
 	reset_flashmodule(&fm);
 
+	test++;
+	if (test == 15)
+	{
+		printf("test == 15\n");
+	}
 	async_fault_gen();
+
+	printf("reset complete\n");
+	pthread_create(&thread1, NULL, (void *)workload, NULL);
 }

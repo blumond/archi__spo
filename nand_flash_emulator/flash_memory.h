@@ -106,7 +106,7 @@ struct flashmodule
 	int power_fail_flag;
 };
 
-int sibling_page_table[PAGES_PER_BLOCK][BITS_PER_CELL];
+extern int sibling_page_table[PAGES_PER_BLOCK][BITS_PER_CELL];
 
 void init_flashmodule(struct flashmodule *p_fm);
 void init_bus(struct bus *p_bus);

@@ -229,11 +229,19 @@ int is_data_transfer_done(struct dte_request_queue *p_dma_req_q, int p_id)
 
 void *data_transfer_engine()
 {
+	int in = 0;
 	while (1)
 	{
+		pthread_mutex_lock(&dte_req_q->mutex);
 		if (dte_req_q->num_of_entries)
 		{
+			in = 1;
+		}
+		pthread_mutex_unlock(&dte_req_q->mutex);
+		if (in)
+		{
 			unit_data_transfer(dte_req_q);
+			in = 0;
 		}
 	}
 }

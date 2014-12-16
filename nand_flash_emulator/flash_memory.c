@@ -7,6 +7,7 @@
 #include "configuration.h"
 
 static struct nand_memory_pointer nand_mem_pointer;
+int sibling_page_table[PAGES_PER_BLOCK][BITS_PER_CELL];
 
 void init_memory_alloc(struct nand_memory_pointer *p_nand_mem_pointer)
 {
@@ -263,6 +264,7 @@ void reset_flashmodule(struct flashmodule *p_fm)
 {
 	int i;
 
+	p_fm->power_fail_flag = 0;
 	for (i = 0; i < NUM_OF_BUS; i++)
 	{
 		reset_bus(&p_fm->buses[i]);

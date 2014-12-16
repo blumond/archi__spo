@@ -114,6 +114,11 @@ struct event_queue_node if_dequeue(struct if_queue_type *p_queue)
 	struct if_queue_node *del_queue_node;
 	struct event_queue_node return_eq_node;
 
+	if (p_queue->num_of_entries == 0)
+	{
+		printf("a");
+	}
+
 	p_queue->num_of_entries--;
 	del_queue_node = p_queue->head;
 	p_queue->head = p_queue->head->next;

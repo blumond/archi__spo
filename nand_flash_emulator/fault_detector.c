@@ -52,7 +52,7 @@ void unreliable_read_violation(int p_state)
 		&& p_state != PFM_ERASED)
 	{
 		printf("unreliable  read violation\n");
-		assert(0);
+		//assert(0);
 	}
 }
 

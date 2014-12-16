@@ -13,10 +13,10 @@
 #include "work_queue.h"
 #include "data_transfer_engine.h"
 
+pthread_t thread0, thread1, thread2;
+
 int main(int argc, char **argv)
 {
-	pthread_t thread0, thread1, thread2;
-	
 	int join_status = 0;
 
 	//init

@@ -137,7 +137,7 @@ int sync_fault_gen(int cmd, int addr){
 	case BLOCK_ERASE:
 		pe_cycle = get_pe_cycle(addr);
 
-#ifdef FAULT_FREE
+#ifdef SYNC_FAULT_FREE
 		return ERASE_OK;
 #endif
 		if (erase_error(pe_cycle) == FAULT){
@@ -147,7 +147,7 @@ int sync_fault_gen(int cmd, int addr){
 	case PAGE_PROGRAM_FINISH:
 		pe_cycle = get_pe_cycle(addr);
 
-#ifdef FAULT_FREE
+#ifdef SYNC_FAULT_FREE
 		return PROGRAM_OK;
 #endif
 
@@ -283,7 +283,7 @@ int init_async_fault_generator(void){
 
 	fault_time.QuadPart = fault_time.QuadPart + ASYN_T_INITIAL;
 	
-#ifndef FAULT_FREE
+#ifndef ASYNC_FAULT_FREE
 	eq_node.time = fault_time;
 	eq_node.dst = ASYNC_FAULT;
 	reg_asynch_fault(eq_node);

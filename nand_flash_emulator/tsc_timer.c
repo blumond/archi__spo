@@ -44,7 +44,7 @@ void *tsc_timer()
 				//async fault 처리
 				//현재 on-going cmd에 대한 처리
 				eq_node = dequeue_event_queue(eq);
-				//async_fault_processing();
+				async_fault_processing();
  			}
 		}
 		if (ftl_to_nand->num_of_entries > 0)

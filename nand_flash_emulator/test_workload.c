@@ -8,6 +8,7 @@
 #include "request_if.h"
 #include "simple_rand.h"
 #include "configuration.h"
+#include "nand_flash_emulator.h"
 
 unsigned int g_rand_workload_seed = 1234;
 
@@ -52,20 +53,38 @@ void rand_workload_gen()
 	
 	while (1)
 	{
+		if (fm.power_fail_flag)
+		{
+			free(data);
+			pthread_exit(0);
+		}
 		if (id - res_id >= NCQ)
 		{
 			while (1)
 			{
+				if (fm.power_fail_flag)
+				{
+					free(data);
+					pthread_exit(0);
+				}
 				if (nand_to_ftl->num_of_entries > 0)
 				{
 					pthread_mutex_lock(&nand_to_ftl->mutex);
-					ack_node = if_dequeue(nand_to_ftl);
+					if (nand_to_ftl->num_of_entries > 0)
+					{
+						ack_node = if_dequeue(nand_to_ftl);
+					}
 					pthread_mutex_unlock(&nand_to_ftl->mutex);
 
 					res_id = ack_node.ftl_req.id;
 					break;
 				}
 			}
+		}
+
+		if (id - res_id >= NCQ)
+		{
+			printf("??\n");
 		}
 
 		g_rand_workload_seed = simple_rand(g_rand_workload_seed);

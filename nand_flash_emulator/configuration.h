@@ -14,6 +14,7 @@
 
 #define RESERVED_QUEUE_SIZE 64
 
-#define FAULT_FREE
+#define SYNC_FAULT_FREE
+//#define ASYNC_FAULT_FREE
 
 #endif
